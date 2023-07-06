@@ -1,4 +1,5 @@
 #include "userosc.h"
+#include "stops_resets.hpp"
 
 #define H_SUB .5f
 #define H_FIFTH 1.5f
@@ -8,10 +9,6 @@
 #define H_5TH 5.f
 #define H_6TH 6.f
 #define H_8TH 8.f
-
-float INIT[9] = {0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f};
-float POP[9] = {1.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 1.f};
-float JAZZ[9] = {1.f, 1.f, 1.f, 0.f, 0.f, 0.f, 0.f, 0.f, 1.f};
 
 
 enum {
@@ -50,16 +47,26 @@ inline void updatePitch(float w0) {
 inline void updateAmplitudes(void) {
 
   float *amps;
-  if (p.shape >= 0 && p.shape <= 10) {
+  if (p.shape >= 0.0 && p.shape <= 0.1) {
     amps = POP;
   }
+  else if (p.shape > 0.1 && p.shape <= 0.2) {
+    amps = FLUTE;
+  }
+  else if (p.shape > 0.2 && p.shape <= 0.3) {
+    amps = OBOE;
+  }
+  else if (p.shape > 0.3 && p.shape <= 0.4) {
+    amps = DIAPSON;
+  }
+  else if (p.shape > 0.4 && p.shape <= 0.5) {
+    amps = CELLO;
+  } 
   else {
     amps = JAZZ;
   }
 
-  float total_amplitude = 0.f;
-   //Calculate length of array arr    
-  // int length = sizeof(*amps)/sizeof(*amps[0]);    
+  float total_amplitude = 0.f;   
   for (int i = 0; i < 9; i++) {     
       total_amplitude += *(amps+i);    
   }    
