@@ -16,12 +16,12 @@ float JAZZ[9] = {1.f, 1.f, 1.f, 0.f, 0.f, 0.f, 0.f, 0.f, 1.f};
 
 enum {
   k_flags_none    = 0,
-  k_flag_drawbars = 1<<0,
+  k_flag_organ_preset = 1<<0,
   k_flag_reset    = 1<<1
 };
 
 typedef struct Params {
-  float shape, shiftshape, drawbar_16, drawbar_8, drawbar_4, drawbar_II, drawbar_III;
+  float shape, shiftshape;
 } Params;
 
 typedef struct State {
@@ -29,7 +29,7 @@ typedef struct State {
   float    w01, w02, w03, w04, w05, w06, w07, w08, w09;
   float    a1, a2, a3, a4, a5, a6, a7, a8, a9;
   float    lfo, lfoz;
-  uint32_t flags:9;
+  uint32_t flags:8;
 } State;
 
 static Params p;
@@ -48,11 +48,6 @@ inline void updatePitch(float w0) {
 }
 
 inline void updateAmplitudes(void) {
-//    const float total_amplitude = MAX(MAX(MAX(MAX(params.drawbar_16, para
-//ms.drawbar_8), params.drawbar_4), params.drawbar_II), params.drawbar_III);
-//    const float scale = 5.f / total_amplitude * (params.drawbar_16 + para
-//ms.drawbar_8 + params.drawbar_4 + params.drawbar_II*2 + params.drawbar_III*
-//3);
 
   float *amps;
   if (p.shape >= 0 && p.shape <= 10) {
@@ -73,6 +68,12 @@ inline void updateAmplitudes(void) {
   s.a1 = *amps / total_amplitude;
   s.a2 = *(amps+1) / total_amplitude;
   s.a3 = *(amps+2) / total_amplitude;
+  s.a4 = *(amps+3) / total_amplitude;
+  s.a5 = *(amps+4) / total_amplitude;
+  s.a6 = *(amps+5) / total_amplitude;
+  s.a7 = *(amps+6) / total_amplitude;
+  s.a8 = *(amps+7) / total_amplitude;
+  s.a9 = *(amps+8) / total_amplitude;
 
 }
 
@@ -83,11 +84,6 @@ inline void resetPhase(void) {
 
 void OSC_INIT(uint32_t platform, uint32_t api)
 {
-  p.drawbar_16 = 1.f;
-  p.drawbar_8 = 1.f;
-  p.drawbar_4 = 1.f;
-  p.drawbar_II = 1.f;
-  p.drawbar_III = 1.f;
   updateAmplitudes();
   updatePitch(440.f);
 }
@@ -103,7 +99,7 @@ void OSC_CYCLE(const user_osc_param_t * const params,
     
     updatePitch(osc_w0f_for_note((params->pitch)>>8, params->pitch & 0xFF));
     
-    if (flags & k_flag_drawbars)
+    if (flags & k_flag_organ_preset)
       updateAmplitudes();
     if (flags & k_flag_reset)
       resetPhase();
@@ -216,6 +212,7 @@ void OSC_PARAM(uint16_t index, uint16_t value)
     
   case k_user_osc_param_shape:
     p.shape = param_val_to_f32(value);
+    s.flags |= k_flag_organ_preset;
     break;
     
   case k_user_osc_param_shiftshape:
