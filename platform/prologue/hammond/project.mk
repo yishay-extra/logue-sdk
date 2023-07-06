@@ -2,7 +2,7 @@
 # Project Customization
 # #############################################################################
 
-PROJECT = hammond_osc
+PROJECT = hammond
 
 UCSRC =
 
