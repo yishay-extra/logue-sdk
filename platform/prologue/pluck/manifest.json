@@ -6,16 +6,12 @@
         "api" : "1.1-0",
         "dev_id" : 0,
         "prg_id" : 0,
-        "version" : "1.0-0",
+        "version" : "1.0-2",
         "name" : "pluck",
-        "num_param" : 6,
+        "num_param" : 2,
         "params" : [
-            ["dummy0",    0, 100, "%"],
-            ["dummy1",    0, 100, "%"],
-            ["dummy2",    0, 100, "%"],
-            ["dummy3",    0, 100, "%"],
-            ["dummy4", -100, 100, "%"],
-            ["dummy5",    0, 10,  ""]            
+            ["Attenuation", 0, 100, "%"],
+            ["Drive",       0, 100, "%"]
           ]
     }
 }

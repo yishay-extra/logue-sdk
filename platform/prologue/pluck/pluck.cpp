@@ -24,20 +24,21 @@ void OSC_CYCLE(const user_osc_param_t * const params,
     s.flags = Pluck::k_flags_none;
     
     if (flags & Pluck::k_flag_reset) {
-      s.delay.clear();
-      s.burst = 48.f*s.attack; // milliseconds at 48khz
+      s_pluck.delay.clear();
+      s.burst = 48.f*p.attack; // milliseconds at 48khz
     }
     
     s.lfo = q31_to_f32(params->shape_lfo);
   }
   
-  dsp::BiQuad &impulse_filter = s.impulse_filter;
-  dsp::DelayLine &delay = s.delay;
+  dsp::BiQuad &impulse_filter = s_pluck.impulse_filter;
+  dsp::DelayLine &delay = s_pluck.delay;
+  dsp::BiQuad &postlpf = s_pluck.postlpf;
 
-  const float attenuation = s.attenuation;
+  const float attenuation = p.attenuation;
   const float length = clipminmaxf(2.f, 1.f / osc_w0f_for_note((params->pitch)>>8, params->pitch & 0xFF), DELAY_BUFFER_SIZE);
 
-  const float drive = s.drive;
+  const float drive = p.drive;
 
   uint32_t burst = s.burst;
 
@@ -52,7 +53,7 @@ void OSC_CYCLE(const user_osc_param_t * const params,
     float sig = delay.readFrac(length);
 
     // low-pass filter for damping
-    const float damping = clipminmaxf(.000001f, s.damping + lfoz, .999999f);
+    const float damping = clipminmaxf(.000001f, p.damping + lfoz, .999999f);
     sig = (1.f - attenuation) * (sig*damping + lastSig*(1.f - damping));
 
     if (burst>0) {
@@ -65,6 +66,8 @@ void OSC_CYCLE(const user_osc_param_t * const params,
     delay.write(osc_softclipf(0.05f, sig));
 
     sig = osc_softclipf(0.05f, sig * drive);
+    sig = postlpf.process_fo(sig);
+    sig = osc_softclipf(0.125f, sig);
 
     *(y++) = f32_to_q31(sig);
 
@@ -96,13 +99,13 @@ void OSC_PARAM(uint16_t index, uint16_t value)
   case k_user_osc_param_id1:
     {
       const float x = value*.01f*.6f + .1f;
-      s.attenuation = x*x*x; // 0.01 to 0.343 with more resolution in the lower values
+      p.attenuation = x*x*x; // 0.01 to 0.343 with more resolution in the lower values
       s.flags |= Pluck::k_flag_attenuation;
     }
     break;
   case k_user_osc_param_id2:
     {
-      s.drive = 1.f + value*.01f; // 1 to 2
+      p.drive = 1.f + value*.01f; // 1 to 2
       s.flags |= Pluck::k_flag_drive;
     }
     break;
@@ -114,7 +117,7 @@ void OSC_PARAM(uint16_t index, uint16_t value)
     
   case k_user_osc_param_shape:
     {
-      s.damping = 1.f - clipminmaxf(.0000001f, param_val_to_f32(value), .999999f); // 1 to 0
+      p.damping = 1.f - clipminmaxf(.0000001f, param_val_to_f32(value), .999999f); // 1 to 0
       s.flags |= Pluck::k_flag_damping;
     }
     break;
@@ -122,7 +125,7 @@ void OSC_PARAM(uint16_t index, uint16_t value)
   case k_user_osc_param_shiftshape:
     {
       const float x = 1.f - param_val_to_f32(value);
-      s.impulse_filter.mCoeffs.setPoleLP(clipminmaxf(.0000001f, 1.f - x*x*x, .999999f)); // more resolution near 1
+      s_pluck.impulse_filter.mCoeffs.setPoleLP(clipminmaxf(.0000001f, 1.f - x*x*x, .999999f)); // more resolution near 1
       s.flags |= Pluck::k_flag_attack;
     }
     break;
